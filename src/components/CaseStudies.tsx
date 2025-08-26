@@ -1,7 +1,7 @@
 import { CheckCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import logisticsImage from "@/assets/logistics-automation.jpg";
-import ecommerceImage from "@/assets/ecommerce-ai.jpg";
+import logisticsImage from "@/assets/logistics-case-study.jpg";
+import ecommerceImage from "@/assets/ecommerce-case-study.jpg";
 
 const caseStudies = [
   {
