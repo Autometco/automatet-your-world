@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import abstractBg from "@/assets/abstract-tech-bg.jpg";
 
 export const Hero = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -145,15 +144,6 @@ export const Hero = () => {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-900">
-      {/* Static Background Image */}
-      <div className="absolute inset-0 opacity-20">
-        <img 
-          src={abstractBg} 
-          alt="Abstract Tech Background"
-          className="w-full h-full object-cover"
-        />
-      </div>
-
       {/* Animated Canvas Background */}
       <canvas
         ref={canvasRef}

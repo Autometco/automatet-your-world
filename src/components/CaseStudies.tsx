@@ -1,11 +1,8 @@
 import { CheckCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import logisticsImage from "@/assets/logistics-case-study.jpg";
-import ecommerceImage from "@/assets/ecommerce-case-study.jpg";
 
 const caseStudies = [
   {
-    image: logisticsImage,
     challenge: "El Reto",
     challengeText: "Una empresa de logística perdía incontables horas en la planificación manual de rutas, lo que resultaba en altos costes de combustible y retrasos en las entregas.",
     solution: "La Solución Automet",
@@ -14,10 +11,10 @@ const caseStudies = [
       "Reducción del 98% en tiempo de planificación.",
       "15% de ahorro en costes de combustible.",
       "Aumento del 30% en la puntualidad de entregas."
-    ]
+    ],
+    icon: "🚚"
   },
   {
-    image: ecommerceImage,
     challenge: "El Reto",
     challengeText: "Una tienda online de moda sufría de abandono de carritos y no lograba conectar con sus clientes para ofrecer recomendaciones personalizadas de forma efectiva.",
     solution: "La Solución Automet",
@@ -26,7 +23,8 @@ const caseStudies = [
       "Aumento del 40% en la conversión de ventas.",
       "Reducción del 60% en el abandono de carritos.",
       "92% de satisfacción del cliente con el chatbot."
-    ]
+    ],
+    icon: "🛍️"
   }
 ];
 
@@ -42,16 +40,12 @@ export const CaseStudies = () => {
           {caseStudies.map((study, index) => (
             <Card 
               key={index}
-              className="group overflow-hidden hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 animate-fade-in"
+              className="group overflow-hidden hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1 animate-fade-in bg-gradient-to-br from-card to-card/80"
               style={{ animationDelay: `${index * 0.3}s` }}
             >
-              <div className="aspect-video overflow-hidden">
-                <img 
-                  src={study.image}
-                  alt={`Case Study ${index + 1}`}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              </div>
+              <CardHeader className="text-center pb-4">
+                <div className="text-6xl mb-4">{study.icon}</div>
+              </CardHeader>
               
               <CardContent className="p-6">
                 <div className="space-y-4">
