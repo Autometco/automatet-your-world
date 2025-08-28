@@ -74,7 +74,8 @@ export default {
 			boxShadow: {
 				'card-hover': 'var(--card-hover)',
 				'elegant': 'var(--shadow-elegant)',
-				'glow': 'var(--shadow-glow)'
+				'glow': 'var(--shadow-glow)',
+				'card-hover-enhanced': 'var(--shadow-card-hover)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -139,6 +140,16 @@ export default {
 					'50%': {
 						transform: 'translateY(-10px)'
 					}
+				},
+				'scale-in': {
+					'0%': {
+						transform: 'scale(0.9)',
+						opacity: '0'
+					},
+					'100%': {
+						transform: 'scale(1)',
+						opacity: '1'
+					}
 				}
 			},
 			animation: {
@@ -147,7 +158,8 @@ export default {
 				'fade-in': 'fade-in 0.6s ease-out',
 				'slide-up': 'slide-up 0.8s ease-out',
 				'bounce-in': 'bounce-in 0.6s ease-out',
-				'float': 'float 3s ease-in-out infinite'
+				'float': 'float 3s ease-in-out infinite',
+				'scale-in': 'scale-in 0.2s ease-out'
 			}
 		}
 	},
