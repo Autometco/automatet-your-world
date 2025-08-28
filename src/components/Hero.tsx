@@ -12,8 +12,47 @@ export const Hero = () => {
     if (!ctx) return;
 
     let width: number, height: number;
-    let particles: Particle[] = [];
+    let time = 0;
     let animationId: number;
+
+    // Color palette inspired by OpenAI
+    const colors = [
+      { r: 99, g: 102, b: 241 },   // Indigo
+      { r: 139, g: 92, b: 246 },   // Purple
+      { r: 236, g: 72, b: 153 },   // Pink
+      { r: 34, g: 197, b: 94 },    // Green
+      { r: 59, g: 130, b: 246 },   // Blue
+      { r: 245, g: 101, b: 101 }   // Red
+    ];
+
+    class FlowField {
+      cols: number;
+      rows: number;
+      field: number[][];
+      
+      constructor(resolution: number) {
+        this.cols = Math.floor(width / resolution);
+        this.rows = Math.floor(height / resolution);
+        this.field = [];
+        
+        for (let i = 0; i < this.cols; i++) {
+          this.field[i] = [];
+          for (let j = 0; j < this.rows; j++) {
+            this.field[i][j] = 0;
+          }
+        }
+      }
+      
+      update() {
+        for (let i = 0; i < this.cols; i++) {
+          for (let j = 0; j < this.rows; j++) {
+            const angle = Math.sin(i * 0.01 + time * 0.002) * Math.PI * 2 + 
+                         Math.cos(j * 0.01 + time * 0.002) * Math.PI * 2;
+            this.field[i][j] = angle;
+          }
+        }
+      }
+    }
 
     class Particle {
       x: number;
@@ -22,49 +61,90 @@ export const Hero = () => {
       vy: number;
       size: number;
       opacity: number;
-      color: string;
-      life: number;
-      maxLife: number;
+      color: { r: number; g: number; b: number };
+      trail: { x: number; y: number; opacity: number }[];
+      maxTrailLength: number;
 
       constructor() {
         this.x = Math.random() * width;
         this.y = Math.random() * height;
-        this.vx = (Math.random() - 0.5) * 0.5;
-        this.vy = (Math.random() - 0.5) * 0.5;
-        this.size = Math.random() * 3 + 1;
-        this.opacity = Math.random() * 0.5 + 0.2;
-        this.color = `hsl(${220 + Math.random() * 40}, 70%, ${60 + Math.random() * 20}%)`;
-        this.life = 0;
-        this.maxLife = Math.random() * 200 + 100;
+        this.vx = 0;
+        this.vy = 0;
+        this.size = Math.random() * 2 + 1;
+        this.opacity = Math.random() * 0.8 + 0.2;
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+        this.trail = [];
+        this.maxTrailLength = 15;
       }
 
-      update() {
+      update(flowField: FlowField) {
+        const col = Math.floor(this.x / (width / flowField.cols));
+        const row = Math.floor(this.y / (height / flowField.rows));
+        
+        if (col >= 0 && col < flowField.cols && row >= 0 && row < flowField.rows) {
+          const angle = flowField.field[col][row];
+          this.vx = Math.cos(angle) * 0.5;
+          this.vy = Math.sin(angle) * 0.5;
+        }
+        
+        // Add current position to trail
+        this.trail.push({ x: this.x, y: this.y, opacity: this.opacity });
+        if (this.trail.length > this.maxTrailLength) {
+          this.trail.shift();
+        }
+        
         this.x += this.vx;
         this.y += this.vy;
-        this.life++;
 
-        // Wrap around screen
+        // Wrap around edges
         if (this.x < 0) this.x = width;
         if (this.x > width) this.x = 0;
         if (this.y < 0) this.y = height;
         if (this.y > height) this.y = 0;
-
-        // Fade based on life
-        this.opacity = Math.max(0, 0.7 - (this.life / this.maxLife));
       }
 
       draw() {
+        // Draw trail
+        this.trail.forEach((point, index) => {
+          const trailOpacity = (index / this.trail.length) * this.opacity * 0.3;
+          const size = (index / this.trail.length) * this.size * 0.5;
+          
+          ctx.save();
+          ctx.globalAlpha = trailOpacity;
+          const gradient = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, size * 2);
+          gradient.addColorStop(0, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${trailOpacity})`);
+          gradient.addColorStop(1, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0)`);
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        });
+
+        // Draw main particle
         ctx.save();
         ctx.globalAlpha = this.opacity;
-        ctx.fillStyle = this.color;
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = this.color;
+        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size * 3);
+        gradient.addColorStop(0, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.opacity})`);
+        gradient.addColorStop(0.4, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, ${this.opacity * 0.5})`);
+        gradient.addColorStop(1, `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0)`);
+        ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Add subtle glow
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0.5)`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size * 0.5, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
       }
     }
+
+    let particles: Particle[] = [];
+    let flowField: FlowField;
 
     const init = () => {
       width = canvas.offsetWidth;
@@ -72,53 +152,63 @@ export const Hero = () => {
       canvas.width = width;
       canvas.height = height;
       
+      flowField = new FlowField(50);
       particles = [];
-      for (let i = 0; i < 80; i++) {
+      
+      // Create fewer, more elegant particles
+      for (let i = 0; i < 60; i++) {
         particles.push(new Particle());
       }
     };
 
     const animate = () => {
-      // Dark background with subtle gradient
+      time++;
+      
+      // Create sophisticated background gradient
       const gradient = ctx.createLinearGradient(0, 0, width, height);
-      gradient.addColorStop(0, 'rgba(15, 23, 42, 0.95)');
-      gradient.addColorStop(0.5, 'rgba(30, 41, 59, 0.9)');
-      gradient.addColorStop(1, 'rgba(51, 65, 85, 0.85)');
+      const baseHue = (time * 0.1) % 360;
+      
+      gradient.addColorStop(0, `hsla(${baseHue}, 20%, 8%, 0.95)`);
+      gradient.addColorStop(0.3, `hsla(${(baseHue + 60) % 360}, 25%, 12%, 0.92)`);
+      gradient.addColorStop(0.7, `hsla(${(baseHue + 120) % 360}, 20%, 10%, 0.9)`);
+      gradient.addColorStop(1, `hsla(${(baseHue + 180) % 360}, 15%, 6%, 0.95)`);
       
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, width, height);
-
-      // Update and draw particles
-      particles.forEach((particle, index) => {
-        particle.update();
+      
+      // Add subtle noise texture
+      const imageData = ctx.getImageData(0, 0, width, height);
+      const data = imageData.data;
+      
+      for (let i = 0; i < data.length; i += 4) {
+        const noise = (Math.random() - 0.5) * 8;
+        data[i] += noise;     // Red
+        data[i + 1] += noise; // Green  
+        data[i + 2] += noise; // Blue
+      }
+      
+      ctx.putImageData(imageData, 0, 0);
+      
+      // Update and draw flow field and particles
+      flowField.update();
+      
+      particles.forEach(particle => {
+        particle.update(flowField);
         particle.draw();
-
-        // Remove dead particles and replace with new ones
-        if (particle.life > particle.maxLife) {
-          particles[index] = new Particle();
-        }
       });
-
-      // Draw connections between nearby particles
-      particles.forEach((particle, i) => {
-        particles.slice(i + 1).forEach((otherParticle) => {
-          const dx = particle.x - otherParticle.x;
-          const dy = particle.y - otherParticle.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < 120) {
-            ctx.save();
-            ctx.globalAlpha = (120 - distance) / 120 * 0.2;
-            ctx.strokeStyle = 'rgba(59, 130, 246, 0.5)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(particle.x, particle.y);
-            ctx.lineTo(otherParticle.x, otherParticle.y);
-            ctx.stroke();
-            ctx.restore();
-          }
-        });
-      });
+      
+      // Add ethereal overlay gradients
+      const overlayGradient1 = ctx.createRadialGradient(width * 0.3, height * 0.3, 0, width * 0.3, height * 0.3, width * 0.5);
+      overlayGradient1.addColorStop(0, 'rgba(139, 92, 246, 0.03)');
+      overlayGradient1.addColorStop(1, 'rgba(139, 92, 246, 0)');
+      ctx.fillStyle = overlayGradient1;
+      ctx.fillRect(0, 0, width, height);
+      
+      const overlayGradient2 = ctx.createRadialGradient(width * 0.7, height * 0.7, 0, width * 0.7, height * 0.7, width * 0.4);
+      overlayGradient2.addColorStop(0, 'rgba(59, 130, 246, 0.02)');
+      overlayGradient2.addColorStop(1, 'rgba(34, 197, 94, 0)');
+      ctx.fillStyle = overlayGradient2;
+      ctx.fillRect(0, 0, width, height);
 
       animationId = requestAnimationFrame(animate);
     };
@@ -143,15 +233,16 @@ export const Hero = () => {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-slate-900">
+    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       {/* Animated Canvas Background */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full"
+        className="absolute inset-0 w-full h-full opacity-90"
       />
 
-      {/* Overlay Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/50 via-transparent to-slate-900/30" />
+      {/* Sophisticated Overlay Gradients */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
+      <div className="absolute inset-0 bg-gradient-to-tl from-transparent via-background/10 to-transparent" />
 
       {/* Hero Content */}
       <div className="relative z-10 container mx-auto px-4 text-center animate-fade-in">
